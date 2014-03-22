@@ -3,6 +3,7 @@
 
 BUILD_DIR=$1
 CACHE_DIR=$2
+ENV_DIR=$3
 
 # fail fast
 set -e
@@ -11,5 +12,19 @@ set -e
 # and compile from that instead.
 git clone --recursive https://github.com/sjlu/heroku-buildpack-sunrise.git
 
-# compile PHP first.
+# we need to compile Node.js first because we are
+# doing dependency pulldowns and we aren't really
+# running the Node.js anyways.
+./heroku-buildpack-sunrise/refs/heroku-buildpack-nodejs/bin/compile $BUILD_DIR $CACHE_DIR $ENV_DIR
+
+# once npm is installed, we should see and detect
+# if bower is installed
+if [ -f "$BUILD_DIR/bower.json" ]; then
+  echo "------> Installing Bower and its dependencies" 
+fi
+
+# compile PHP afterwards.
 ./heroku-buildpack-sunrise/refs/heroku-buildpack-php/bin/compile $BUILD_DIR $CACHE_DIR
+
+# cleanup.
+https://github.com/sjlu/heroku-buildpack-sunrise.git
