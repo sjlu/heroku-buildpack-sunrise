@@ -1,8 +1,15 @@
 #!/usr/bin/env bash
 # bin/compile <build-dir> <cache-dir>
 
+BUILD_DIR=$1
+CACHE_DIR=$2
+
 # fail fast
 set -e
 
-git submodule update --init
-../refs/heroku-buildpack-php/bin/compile
+# get the actual buildpack from git
+# and compile from that instead.
+git clone --recursive https://github.com/sjlu/heroku-buildpack-sunrise.git
+
+# compile PHP first.
+./heroku-buildpack-sunrise/refs/heroku-buildpack-php/bin/compile
