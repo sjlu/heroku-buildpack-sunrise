@@ -12,4 +12,4 @@ set -e
 git clone --recursive https://github.com/sjlu/heroku-buildpack-sunrise.git
 
 # compile PHP first.
-./heroku-buildpack-sunrise/refs/heroku-buildpack-php/bin/compile
+./heroku-buildpack-sunrise/refs/heroku-buildpack-php/bin/compile $BUILD_DIR $CACHE_DIR
