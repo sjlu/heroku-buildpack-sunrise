@@ -1,16 +1,22 @@
 #!/usr/bin/env bash
 # bin/compile <build-dir> <cache-dir>
 
+BIN_DIR=$(dirname $0)
 BUILD_DIR=$1
 CACHE_DIR=$2
 ENV_DIR=$3
+CWD=$(pwd)
 
 # fail fast
 set -e
 
 # get the actual buildpack from git
 # and compile from that instead.
-git clone --recursive https://github.com/sjlu/heroku-buildpack-sunrise.git
+rm -rf heroku-buildpack-sunrise # cleanup if failed
+git clone --recursive https://github.com/sjlu/heroku-buildpack-sunrise.git --quiet
+
+# source some convenience functions
+source ./heroku-buildpack-sunrise/refs/heroku-buildpack-nodejs/bin/common.sh
 
 # we need to compile Node.js first because we are
 # doing dependency pulldowns and we aren't really
@@ -20,11 +26,58 @@ git clone --recursive https://github.com/sjlu/heroku-buildpack-sunrise.git
 # once npm is installed, we should see and detect
 # if bower is installed
 if [ -f "$BUILD_DIR/bower.json" ]; then
-  echo "------> Installing Bower and its dependencies" 
+  status "Installing Bower components" 
+
+  # change to the build directory
+  cd $BUILD_DIR
+
+  # exporting path
+  PATH=$PATH:$BUILD_DIR/vendor/node/bin
+
+  # Creating a cache_dir if it
+  # doesn't exist.
+  mkdir -p $CACHE_DIR/sunrise
+
+  # seeing if we have a cache
+  # if not, reinstall
+  if [ -d "$CACHE_DIR/sunrise/bower" ]; then
+    status "Restoring Bower from cache"
+    cp -r $CACHE_DIR/sunrise/bower $BUILD_DIR/node_modules/
+    npm update bower 2>&1 | indent
+  else
+    npm install bower 2>&1 | indent
+  fi
+
+  # caching bower itself.
+  status "Caching Bower install"
+  cp -r $BUILD_DIR/node_modules/bower $CACHE_DIR/sunrise/
+
+  # do we have a cache of bower_components that
+  # we can use?
+  if [ -d "$CACHE_DIR/sunrise/bower_components" ]; then
+    status "Found existing bower_components from cache"
+    cp -r $CACHE_DIR/sunrise/bower_components $BUILD_DIR/
+  fi
+
+  # install any new bower components
+  status "Cloning Bower components"
+  $BUILD_DIR/node_modules/bower/bin/bower install | indent
+
+  # cache bower components
+  status "Caching bower_components directory for future builds"
+  cp -r $BUILD_DIR/bower_components $CACHE_DIR/sunrise/
+
+  # changing out directory
+  cd $CWD
 fi
 
+# cleanup the vendor directory and the unnecessary
+# Procfile that the previous buildpack has created
+rm -rf $BUILD_DIR/vendor
+rm -rf $BUILD_DIR/Procfile
+
 # compile PHP afterwards.
-./heroku-buildpack-sunrise/refs/heroku-buildpack-php/bin/compile $BUILD_DIR $CACHE_DIR
+./heroku-buildpack-sunrise/refs/heroku-buildpack-php/bin/compile $BUILD_DIR $CACHE_DIR/php
 
 # cleanup.
-https://github.com/sjlu/heroku-buildpack-sunrise.git
+rm -rf heroku-buildpack-sunrise
