@@ -15,6 +15,10 @@ set -e
 rm -rf heroku-buildpack-sunrise # cleanup if failed
 git clone --recursive https://github.com/sjlu/heroku-buildpack-sunrise.git --quiet
 
+# Creating a cache_dir if it
+# doesn't exist.
+mkdir -p $CACHE_DIR/sunrise
+
 # source some convenience functions
 source ./heroku-buildpack-sunrise/refs/heroku-buildpack-nodejs/bin/common.sh
 
@@ -29,14 +33,10 @@ if [ -f "$BUILD_DIR/bower.json" ]; then
   status "Installing Bower components" 
 
   # change to the build directory
-  cd $BUILD_DIR
+  pushd $BUILD_DIR > /dev/null
 
   # exporting path
   PATH=$PATH:$BUILD_DIR/vendor/node/bin
-
-  # Creating a cache_dir if it
-  # doesn't exist.
-  mkdir -p $CACHE_DIR/sunrise
 
   # seeing if we have a cache
   # if not, reinstall
@@ -68,16 +68,39 @@ if [ -f "$BUILD_DIR/bower.json" ]; then
   cp -r $BUILD_DIR/bower_components $CACHE_DIR/sunrise/
 
   # changing out directory
-  cd $CWD
+  popd > /dev/null
 fi
 
 # cleanup the vendor directory and the unnecessary
 # Procfile that the previous buildpack has created
 rm -rf $BUILD_DIR/vendor
 rm -rf $BUILD_DIR/Procfile
+rm -rf $BUILD_DIR/node_modules
 
 # compile PHP afterwards.
 ./heroku-buildpack-sunrise/refs/heroku-buildpack-php/bin/compile $BUILD_DIR $CACHE_DIR/php
+
+# install composer and get deps.
+if [ -f "$BUILD_DIR/www/composer.json" ]; then
+  status "Installing dependencies using Composer"
+
+  # change directory
+  pushd $BUILD_DIR/www > /dev/null
+
+  # downloading composer
+  curl --silent --max-time 60 --location "http://getcomposer.org/composer.phar" > composer.phar
+
+  # download deps
+  LD_LIBRARY_PATH="$BUILD_DIR/vendor/mcrypt/lib/" $BUILD_DIR/php/bin/php composer.phar install -n | indent
+
+  # removing composer.phar
+  rm composer.phar
+
+  # change back
+  popd > /dev/null
+fi
+
+ls -al $BUILD_DIR/apache/conf
 
 # cleanup.
 rm -rf heroku-buildpack-sunrise
