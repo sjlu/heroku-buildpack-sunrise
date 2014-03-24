@@ -27,6 +27,11 @@ source ./heroku-buildpack-sunrise/refs/heroku-buildpack-nodejs/bin/common.sh
 # running the Node.js anyways.
 ./heroku-buildpack-sunrise/refs/heroku-buildpack-nodejs/bin/compile $BUILD_DIR $CACHE_DIR $ENV_DIR
 
+# make sure this directory exists in case
+# there is nothing to install through node
+# or else our bower install just fails.
+mkdir -p $BUILD_DIR/node_modules
+
 # once npm is installed, we should see and detect
 # if bower is installed
 if [ -f "$BUILD_DIR/bower.json" ]; then
@@ -42,7 +47,7 @@ if [ -f "$BUILD_DIR/bower.json" ]; then
   # if not, reinstall
   if [ -d "$CACHE_DIR/sunrise/bower" ]; then
     status "Restoring Bower from cache"
-    cp -r $CACHE_DIR/sunrise/bower $BUILD_DIR/node_modules/
+    cp -r $CACHE_DIR/sunrise/bower $BUILD_DIR/node_modules
     npm update bower 2>&1 | indent
   else
     npm install bower 2>&1 | indent
