@@ -92,7 +92,11 @@ if [ -f "$BUILD_DIR/www/composer.json" ]; then
   popd > /dev/null
 fi
 
-ls -al $BUILD_DIR/apache/conf
+# if we detect the public folder link
+# to that instead.
+if [ -d "$BUILD_DIR/www/public" ]; then
+  sed -i.bak 's/\/app\/www/\/app\/www\/public/' $BUILD_DIR/apache/conf/httpd.conf
+fi
 
 # cleanup.
 rm -rf heroku-buildpack-sunrise
