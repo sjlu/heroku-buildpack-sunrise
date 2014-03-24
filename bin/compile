@@ -103,5 +103,9 @@ if [ -d "$BUILD_DIR/www/public" ]; then
   sed -i.bak 's/\/app\/www/\/app\/www\/public/' $BUILD_DIR/apache/conf/httpd.conf
 fi
 
+# add php paths to .profile.d
+mkdir -p $BUILD_DIR/.profile.d
+echo "PATH=\$PATH:$HOME/php/bin" > $BUILD_DIR/.profile.d/php.sh
+
 # cleanup.
 rm -rf heroku-buildpack-sunrise
