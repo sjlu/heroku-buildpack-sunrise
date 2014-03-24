@@ -76,11 +76,14 @@ if [ -f "$BUILD_DIR/www/composer.json" ]; then
   # change directory
   pushd $BUILD_DIR/www > /dev/null
 
+  # set the path
+  PATH=$PATH:$BUILD_DIR/php/bin/
+
   # downloading composer
   curl --silent --max-time 60 --location "http://getcomposer.org/composer.phar" > composer.phar
 
   # download deps
-  LD_LIBRARY_PATH="$BUILD_DIR/vendor/mcrypt/lib/" $BUILD_DIR/php/bin/php composer.phar install -n | indent
+  LD_LIBRARY_PATH="$BUILD_DIR/vendor/mcrypt/lib/" php composer.phar install -n | indent
 
   # removing composer.phar
   rm composer.phar
