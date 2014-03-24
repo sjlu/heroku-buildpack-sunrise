@@ -13,7 +13,7 @@ set -e
 # get the actual buildpack from git
 # and compile from that instead.
 rm -rf heroku-buildpack-sunrise # cleanup if failed
-git clone --recursive https://github.com/sjlu/heroku-buildpack-sunrise.git --quiet
+git clone --recursive https://github.com/sjlu/heroku-buildpack-sunrise.git >> /dev/null
 
 # Creating a cache_dir if it
 # doesn't exist.
