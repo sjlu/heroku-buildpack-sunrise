@@ -52,20 +52,9 @@ if [ -f "$BUILD_DIR/bower.json" ]; then
   status "Caching Bower install"
   cp -r $BUILD_DIR/node_modules/bower $CACHE_DIR/sunrise/
 
-  # do we have a cache of bower_components that
-  # we can use?
-  if [ -d "$CACHE_DIR/sunrise/bower_components" ]; then
-    status "Found existing bower_components from cache"
-    cp -r $CACHE_DIR/sunrise/bower_components $BUILD_DIR/
-  fi
-
   # install any new bower components
   status "Cloning Bower components"
   $BUILD_DIR/node_modules/bower/bin/bower install | indent
-
-  # cache bower components
-  status "Caching bower_components directory for future builds"
-  cp -r $BUILD_DIR/bower_components $CACHE_DIR/sunrise/
 
   # changing out directory
   popd > /dev/null
